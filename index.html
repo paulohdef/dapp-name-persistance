@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <script src="https://unpkg.com/@metamask/legacy-web3@latest/dist/metamask.web3.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="./node_modules/web3/dist/web3.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="./css/index.css">
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    </head>
+<body>
+
+    <div class="container">
+        <h1>Dapp</h1>
+
+        <h2 id="instructor"></h2>
+
+        <label for="enderecoDaConta" class="col-lg-2 control-label">Hash da do usuário :</label>
+        <h4 id="enderecoDaConta"></h4>
+        
+        <label for="fName" class="col-lg-2 control-label">Nome</label>
+        <input id="fName" type="text">
+
+        <button id="button1">Enviar</button>
+        
+        <button id="button2">Obter</button>
+    </div>
+
+    <script>
+
+        if(typeof web3 !== 'undefined'){
+            web3 = new Web3(web3.currentProvider);
+        } else {
+            web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:7545"));
+        }
+
+        web3.eth.getAccounts().then(function(accounts){    
+            if(accounts.lenght === 0){
+                console.log('MetaMask is locked');
+            }
+            else {
+                //guarda o hash do primeiro usuario do vetor accounts ( irá ser utilizado como parametro do método send do método setNome)
+                account = web3.eth.defaultAccount = accounts[0];
+                $("#enderecoDaConta").html(web3.eth.defaultAccount);              
+            }
+        });
+
+        var ABIContract = new web3.eth.Contract([
+            {
+                "inputs": [],
+                "stateMutability": "nonpayable",
+                "type": "constructor"
+            },
+            {
+                "inputs": [],
+                "name": "getNome",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "string",
+                        "name": "_nome",
+                        "type": "string"
+                    }
+                ],
+                "name": "setNome",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }
+
+        ]);
+
+        ABIContract.options.address = '0x0fe4379fEC3466dBFD2c6389a0D63ae53B39612a';
+
+        var SmartContract = ABIContract.methods;
+
+        $("#button1")
+            .click(function() {
+                SmartContract
+                    .setNome($("#fName").val())
+                        .send( {from: account }, function(error, result)   {
+                            if(!error){
+                                console.log("Hash : " + result);                            
+                            } else 
+                                console.log(error);
+                        });
+            }
+        ); 
+        
+
+       $("#button2")
+            .click(function()  {
+                SmartContract
+                    .getNome()
+                        .call(function (error, result){
+                            if(!error){
+                                $("#instructor").html("O nome persistido na blockchain é : " + result);
+                            } else
+                                console.log(error);
+                            }
+            );
+            
+        })
+
+    </script>
+
+</body>
+</html>
